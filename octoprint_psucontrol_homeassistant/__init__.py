@@ -78,6 +78,8 @@ class PSUControl_HomeAssistant(octoprint.plugin.StartupPlugin,
     def __init__(self):
         self.config = dict()
         self._verify_lock = threading.Lock()
+        self._ha_reachable = True
+        self._last_ha_error = None
 
     ##~~ Settings
 
@@ -213,7 +215,27 @@ class PSUControl_HomeAssistant(octoprint.plugin.StartupPlugin,
 
     ##~~ PSU Control sub-plugin interface
 
+    def _printer_is_busy(self):
+        """True while a job is running, pausing, paused or cancelling.
+
+        A printer that is executing a job is powered, whatever Home Assistant says.
+        """
+        printer = getattr(self, "_printer", None)
+        if printer is None:
+            return False
+        for check in ("is_printing", "is_pausing", "is_paused", "is_resuming", "is_cancelling"):
+            fn = getattr(printer, check, None)
+            if fn is not None and fn():
+                return True
+        return False
+
     def turn_psu_on(self):
+        # PSU Control's "Automatically turn PSU ON" calls this synchronously from the
+        # G-code queuing hook. During a job the PSU is necessarily on, so calling HA
+        # would only stall the queue (up to the request timeout per G-code) if HA is down.
+        if self._printer_is_busy():
+            self._logger.debug("Printer is busy with a job, so the PSU is already on. Not calling Home Assistant.")
+            return
         self._logger.debug("Switching PSU On")
         try:
             self.change_psu_state('on')
@@ -260,13 +282,30 @@ class PSUControl_HomeAssistant(octoprint.plugin.StartupPlugin,
             self._verify_lock.release()
 
     def get_psu_state(self):
-        # PSU Control only understands True/False, so "unreachable" has to be reported
-        # as False. Log it at ERROR so it never looks like a normal "off".
+        # PSU Control only understands True/False. When HA can't be reached:
+        # - during a job the printer is obviously powered, so report ON. Reporting OFF
+        #   would make "Automatically turn PSU ON" fire on every queued G-code and
+        #   stall the print (upstream issues #4, #11, #16).
+        # - otherwise report OFF, and log at ERROR so it never looks like a normal "off".
         try:
-            return self._read_state() == 'on'
+            state = self._read_state() == 'on'
         except PSUControlHomeAssistantError as e:
-            self._logger.error("Unable to read PSU state, reporting OFF: {}".format(e))
-            return False
+            busy = self._printer_is_busy()
+            # Log when HA goes away or the reason changes, not on every poll.
+            if self._ha_reachable or str(e) != self._last_ha_error:
+                self._logger.error("Unable to read PSU state, reporting {}: {}".format(
+                    "ON because a job is running" if busy else "OFF", e))
+            if self._ha_reachable:
+                self._notify("error", "Home Assistant is unreachable: {}".format(e))
+            self._ha_reachable = False
+            self._last_ha_error = str(e)
+            return busy
+        if not self._ha_reachable:
+            self._ha_reachable = True
+            self._last_ha_error = None
+            self._logger.info("Home Assistant is reachable again")
+            self._notify("info", "Home Assistant is reachable again.")
+        return state
 
     ##~~ UI notifications
 

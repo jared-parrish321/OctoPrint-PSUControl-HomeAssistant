@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "OctoPrint-PSUControl-HomeAssistant"
-version = "1.1.0"
+version = "1.2.0"
 description = "Adds Home Assistant support to OctoPrint-PSUControl as a sub-plugin"
 readme = "README.md"
 license = "AGPL-3.0-only"

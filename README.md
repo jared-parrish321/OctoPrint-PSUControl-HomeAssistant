@@ -20,10 +20,11 @@ sudo service octoprint restart
 ## Setup
 - Configure this plugin (see below) and press **Test connection**
 - Select this plugin as Switching *and* Sensing method in [PSU Control](https://github.com/kantlivelong/OctoPrint-PSUControl)
-- :warning: **Turn off** the *Automatically turn PSU ON* option in the PSU Control settings, leaving this on will ruin your prints when Home Assistant becomes unavailable :warning: (some explanation in upstream tickets
+- *Automatically turn PSU ON* in PSU Control: upstream warned to turn this off, because when Home Assistant was unreachable the PSU was reported as off, so every queued G-code triggered a blocking turn-on call and stalled the print (upstream issues
 [#4](https://github.com/edekeijzer/OctoPrint-PSUControl-HomeAssistant/issues/4),
 [#11](https://github.com/edekeijzer/OctoPrint-PSUControl-HomeAssistant/issues/11),
-[#16](https://github.com/edekeijzer/OctoPrint-PSUControl-HomeAssistant/issues/16))
+[#16](https://github.com/edekeijzer/OctoPrint-PSUControl-HomeAssistant/issues/16)).
+Since 1.2.0, while a job is running (printing, pausing, paused, resuming or cancelling) the plugin reports the PSU as on if HA can't be reached and skips turn-on calls, so auto-on can no longer stall a print. Outside a job, an auto-on trigger still waits up to the request timeout (about 8 s worst case) if HA is down.
 
 ## Configuration
 * Enter the URL of your Home Assistant installation, e.g. `http://192.168.1.10:8123`. If you leave out `http://` it is added when you save. Use the direct LAN address; a URL behind a login page (such as Cloudflare Access) won't work.
@@ -38,12 +39,16 @@ sudo service octoprint restart
 ## Behaviour
 * Every request to Home Assistant times out after 3 s (connect) / 5 s (read), so a hung HA can't block PSU Control.
 * After a turn-off, the plugin checks the entity's state up to 3 times (2 s apart) and sends the off command again if needed. If the PSU still can't be confirmed off, a sticky error notification appears in OctoPrint and an ERROR is logged.
-* If HA can't be reached, the PSU is reported as off to PSU Control (it only understands on/off) and an ERROR is logged.
+* If HA can't be reached, the PSU is reported as **on during a job** (the printer is clearly powered) and **off otherwise**. An ERROR is logged and a notification shown once when HA goes away, and again when it comes back.
+* Turn-on requests are skipped while a job is running. Turn-off requests are always sent.
 
 ## Support
 Please check your logs first. If they do not explain your issue, open an issue in GitHub. Please set *octoprint.plugins.psucontrol* and *octoprint.plugins.psucontrol_homeassistant* to **DEBUG** and include the relevant logs. The access token is masked in this plugin's log lines, but check the log for anything else private before posting it.
 
 ## Changes in this fork
+* 1.2.0
+  * Safe with *Automatically turn PSU ON*: HA outages during a job no longer stall the print
+  * One notification when HA becomes unreachable and when it recovers, instead of an ERROR every poll
 * 1.1.0
   * Request timeouts, response status checks and JSON validation
   * Turn-off is verified and retried, with a visible notification on failure

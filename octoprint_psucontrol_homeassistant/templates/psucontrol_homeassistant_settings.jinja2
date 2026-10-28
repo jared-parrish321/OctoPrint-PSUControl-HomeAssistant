@@ -8,7 +8,6 @@
 <!-- ko if: !(settings.plugins.psucontrol.sensingMethod() === "PLUGIN" && settings.plugins.psucontrol.sensingPlugin() === "psucontrol_homeassistant") -->
     <span class="help-block label label-important">Please set the sensing method to <b>PLUGIN</b> and the sensing plugin to <b>PSU Control - HomeAssistant</b> in the PSU Control settings to use this plugin.</span>
 <!-- /ko -->
-<!-- ko ifnot: settings.plugins.psucontrol.autoOn() -->
 <form class="form-horizontal" onsubmit="return false;">
     <h4>PSU Control - HomeAssistant settings</h4>
     <div class="control-group">
@@ -54,9 +53,8 @@
         </div>
     </div>
 </form>
-<!-- /ko -->
 <!-- ko if: settings.plugins.psucontrol.autoOn() -->
-<span class="help-inline label label-important">Please DISABLE <u>Automatically turn PSU ON</u> in the PSU Control settings, it will otherwise ruin your prints when HA becomes unavailable.<br>
+<span class="help-block label label-info">"Automatically turn PSU ON" is enabled. While a job is running this plugin reports the PSU as on even if Home Assistant is unreachable, so auto-on can't stall a print. Outside a job, each auto-on trigger waits up to the request timeout if Home Assistant is down.<br>
 See <a href="https://github.com/jared-parrish321/OctoPrint-PSUControl-HomeAssistant#setup" target="_blank" rel="noopener noreferrer">setup</a> for more info.</span>
 <!-- /ko -->
 <!-- /ko -->
