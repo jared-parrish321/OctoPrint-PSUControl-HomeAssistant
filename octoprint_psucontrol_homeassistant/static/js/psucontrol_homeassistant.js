@@ -7,6 +7,14 @@ $(function () {
         self.loginState = parameters[1];
         self.settings = undefined;
 
+        // The access token field is write-only: it starts empty and only replaces the
+        // saved token when something is typed into it.
+        self.newToken = ko.observable("");
+        self.tokenIsSet = ko.pureComputed(function () {
+            var s = self.settings && self.settings.plugins && self.settings.plugins[PLUGIN];
+            return !!(s && s.api_key());
+        });
+
         self.testBusy = ko.observable(false);
         self.testResult = ko.observable("");
         self.testOk = ko.observable(false);
@@ -15,13 +23,26 @@ $(function () {
             self.settings = self.settingsViewModel.settings;
         };
 
+        self.onSettingsShown = function () {
+            self.newToken("");
+        };
+
+        self.onSettingsBeforeSave = function () {
+            var token = self.newToken().trim();
+            if (token) {
+                self.settings.plugins[PLUGIN].api_key(token);
+                self.newToken("");
+            }
+        };
+
         self.testConnection = function () {
             var s = self.settings.plugins[PLUGIN];
             self.testBusy(true);
             self.testResult("");
             OctoPrint.simpleApiCommand(PLUGIN, "test", {
                 address: s.address(),
-                api_key: s.api_key(),
+                // Empty means "use the saved token" on the server side
+                api_key: self.newToken().trim(),
                 entity_id: s.entity_id(),
                 verify_certificate: s.verify_certificate()
             })
