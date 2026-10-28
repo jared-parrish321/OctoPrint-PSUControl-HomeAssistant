@@ -49,6 +49,7 @@ Please check your logs first. If they do not explain your issue, open an issue i
 * 1.2.0
   * Safe with *Automatically turn PSU ON*: HA outages during a job no longer stall the print
   * One notification when HA becomes unreachable and when it recovers, instead of an ERROR every poll
+  * Browsers no longer autofill the OctoPrint login into the Address and Access token fields
 * 1.1.0
   * Request timeouts, response status checks and JSON validation
   * Turn-off is verified and retried, with a visible notification on failure
