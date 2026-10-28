@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "OctoPrint-PSUControl-HomeAssistant"
+version = "1.1.0"
+description = "Adds Home Assistant support to OctoPrint-PSUControl as a sub-plugin"
+readme = "README.md"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Erik de Keijzer", email = "erik.de.keijzer@gmail.com" }]
+maintainers = [{ name = "jared-parrish321" }]
+requires-python = ">=3.8,<4"
+# requests is provided by OctoPrint; OctoPrint itself is deliberately not listed.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/jared-parrish321/OctoPrint-PSUControl-HomeAssistant"
+
+[project.entry-points."octoprint.plugin"]
+psucontrol_homeassistant = "octoprint_psucontrol_homeassistant"
+
+[tool.setuptools.packages.find]
+include = ["octoprint_psucontrol_homeassistant*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.jinja2", "*.js", "*.css"]
