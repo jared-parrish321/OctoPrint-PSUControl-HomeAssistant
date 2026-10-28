@@ -31,7 +31,7 @@ Since 1.2.0, while a job is running (printing, pausing, paused, resuming or canc
 * In Home Assistant, ideally create a dedicated user for OctoPrint, log in as it and open its profile
 * On the *Security* tab, go to *Long-Lived Access Tokens*
 * Click *Create Token*, give the token a name (suggestion: OctoPrint PSUControl) and click *OK*
-* Copy the token and paste it into the *Access token* field in the plugin settings. Only OctoPrint admins can read it back.
+* Copy the token and paste it into the *Access token* field in the plugin settings. The field is write-only: once saved it shows "Token saved", and pasting a new token replaces it. Only OctoPrint admins can read the token through the API.
 * At *Entity ID* enter the ID of the Home Assistant entity you want to control (for example: *switch.my_smart_outlet*)
 * If your HA installation is running HTTPS with a self-signed certificate, uncheck the *Verify certificate* option
 * Press **Test connection**. It shows whether HA answered and the entity's current state.
@@ -49,7 +49,7 @@ Please check your logs first. If they do not explain your issue, open an issue i
 * 1.2.0
   * Safe with *Automatically turn PSU ON*: HA outages during a job no longer stall the print
   * One notification when HA becomes unreachable and when it recovers, instead of an ERROR every poll
-  * Browsers no longer autofill the OctoPrint login into the Address and Access token fields
+  * Access token field is write-only: the saved token is never shown, and browsers no longer autofill the OctoPrint login into the form
 * 1.1.0
   * Request timeouts, response status checks and JSON validation
   * Turn-off is verified and retried, with a visible notification on failure
